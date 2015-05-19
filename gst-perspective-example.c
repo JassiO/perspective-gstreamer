@@ -1,32 +1,10 @@
-/* gst-perspective-example - test program for the GStreamer perspective element
- *
- * Copyright (C) 2013  Antonio Ospite <ospite@studenti.unina.it>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/* FIXME: suppress warnings for deprecated API such as GValueArray
- * with newer GLib versions (>= 2.31.0)
- *
- * It is just not possible to switch to GArray yet because the python API in
- * 1.2.0 still passes iterable properties as GValueArray */
 #define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gst/gst.h>
 
 static gboolean on_message(GstBus *bus, GstMessage *message, gpointer user_data)
 {
     GMainLoop *loop = (GMainLoop *)user_data;
+
 
     switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_ERROR:
@@ -57,15 +35,32 @@ static void set_matrix(GstElement *element)
     /* Initialize a 2D perspective matrix, you can use
      * cvGetPerspectiveTransform() from OpenCV to build it
      * from a quad-to-quad transformation */
-    m[0] = 1.9999999999999982;
-    m[1] = 0.8333333333333287;
-    m[2] = -399.99999999999926;
-    m[3] = 3.9968028886505525e-15;
-    m[4] = 1.9999999999999978;
-    m[5] = -8.277822871605139e-13;
-    m[6] = 2.428612866367518e-18;
-    m[7] = 0.0020833333333333294;
-    m[8] = 0.9999999999999996;
+
+    //correct perspective transformation (inverse homography matrix)
+    
+    m[0] = 0.5596920890906797;
+    m[1] = -0.1412048233981934;
+    m[2] = 446.51265980743085;
+    m[3] = 0.0066711834839692915;
+    m[4] = 0.6200540755978856;
+    m[5] = 114.0658474001021;
+    m[6] = -0.000002252642877335033;
+    m[7] = -0.0001325456040613653;
+    m[8] = 0.9749208559006408;
+
+
+    /*gdouble xp, yp, w, xi, yi, x, y;
+
+    /* Matrix multiplication 
+    xp = (m[0] * x + m[1] * y + m[2]);
+    yp = (m[3] * x + m[4] * y + m[5]);
+    w = (m[6] * x + m[7] * y + m[8]);
+
+    /* Perspective division 
+        xi = xp / w;
+    yi = yp / w;
+
+    g_message(x, y, xi, yi);*/
 
     va = g_value_array_new(1);
 
