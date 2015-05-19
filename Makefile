@@ -29,11 +29,11 @@ CFLAGS += -fno-common \
 CFLAGS += $(shell pkg-config --cflags gstreamer-1.0)
 LDLIBS += $(shell pkg-config --libs gstreamer-1.0)
 
-gst-perspective-example: gst-perspective-example.o
+gst-perspective-transform: gst-perspective-transform.o
 
 clean:
-		rm -f *~ *.o gst-perspective-example
+		rm -f *~ *.o gst-perspective-transform
 
-test: gst-perspective-example
+test: gst-perspective-transform
 		G_DEBUG=gc-friendly G_SLICE=always-malloc \
-		valgrind --leak-check=full --show-reachable=yes ./gst-perspective-example
+		valgrind --leak-check=full --show-reachable=yes ./gst-perspective-transform
