@@ -3,6 +3,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <numeric>
 using namespace cv;
@@ -14,7 +15,8 @@ vector<Point2f> right_image;    // stores 4 points that the user clicks(mouse le
  
 // Image containers for main and logo image
 Mat imageMain;
-Mat imageLogo;
+
+int element_number = 0;
  
 // Function to add main image and transformed logo image and show final output.
 // Icon image replaces the pixels of main image in this implementation.
@@ -50,6 +52,8 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
         }
         else
         {
+            destroyWindow("Display window");
+
             cout << " Calculating Homography " <<endl;
             // Deactivate callback
             cv::setMouseCallback("Display window", NULL, NULL);
@@ -58,15 +62,26 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
             
             int cols = H.cols, rows = H.rows;
 
+            H = H.inv();
+
+            // write homography in file
+
+            std::ofstream H_out ("homography.txt");
+
             for(int i = 0; i < rows; i++)
-			{
-			    const double* Mi = H.ptr<double>(i);
-			    for(int j = 0; j < cols; j++)
-			        std::cout << "m[" << i + j << "] = " << Mi[j] << ";" << std::endl;
-			}
+            {
+                const double* Mi = H.ptr<double>(i);
+                for(int j = 0; j < cols; j++) {
+                    H_out << Mi[j] << std::endl;
+                    element_number += 1;
+                }
+            }
+
+            H_out.close();
 
             Mat logoWarped;
             
+            H = H.inv();
             // Warp the logo image to change its perspective
             warpPerspective(imageMain,logoWarped,H,imageMain.size() );
             showFinal(imageMain,logoWarped);
@@ -80,9 +95,9 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
 int main( int argc, char** argv )
 {
 //  We need tow argumemts. "Main image" and "logo image"
-    if( argc != 3)
+    if( argc != 2)
     {
-        cout <<" Usage: error" << endl;
+        cout <<" Usage: ./opencv_calib_tool your_calibration_image.jpg" << endl;
         return -1;
     }
  

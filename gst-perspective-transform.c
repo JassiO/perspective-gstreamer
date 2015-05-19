@@ -1,6 +1,40 @@
 #define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gst/gst.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <err.h>    /* err */
+#include <stdio.h>  /* fopen, fgetln, fputs, fwrite */
+#include <stdlib.h>
+
+// Homography matrix
+gdouble m[9];
+
+static void read_in_homography()
+{
+    int i = 0;
+    char ch;
+    FILE *fp;
+
+    fp = fopen("homography.txt","r"); // read mode
+
+    if( fp == NULL )
+    {
+        perror("Error while opening the file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("The contents of %s file are :\n", "homography.txt");
+
+    while( ( ch = fgetc(fp) ) != EOF ) {
+        printf("%c",ch);
+        m[i] = ch;
+        ++i; 
+    }
+    fclose(fp);
+}
+
 static gboolean on_message(GstBus *bus, GstMessage *message, gpointer user_data)
 {
     GMainLoop *loop = (GMainLoop *)user_data;
@@ -29,7 +63,7 @@ static void set_matrix(GstElement *element)
 {
     GValueArray *va;
     GValue v = { 0, };
-    gdouble m[9];
+
     guint i;
 
     /* Initialize a 2D perspective matrix, you can use
@@ -37,7 +71,10 @@ static void set_matrix(GstElement *element)
      * from a quad-to-quad transformation */
 
     //correct perspective transformation (inverse homography matrix)
-    
+
+    read_in_homography();
+    printf("First element is: %s", m[0]);
+    /*
     m[0] = 0.5596920890906797;
     m[1] = -0.1412048233981934;
     m[2] = 446.51265980743085;
@@ -46,7 +83,7 @@ static void set_matrix(GstElement *element)
     m[5] = 114.0658474001021;
     m[6] = -0.000002252642877335033;
     m[7] = -0.0001325456040613653;
-    m[8] = 0.9749208559006408;
+    m[8] = 0.9749208559006408;*/
 
 
     /*gdouble xp, yp, w, xi, yi, x, y;
