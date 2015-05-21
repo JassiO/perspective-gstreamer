@@ -9,30 +9,20 @@
 #include <stdlib.h>
 
 // Homography matrix
-gdouble m[9];
+float m[9];
 
-static void read_in_homography()
-{
-    int i = 0;
-    char ch;
+static void read_in_homography(){
+
     FILE *fp;
 
     fp = fopen("homography.txt","r"); // read mode
 
-    if( fp == NULL )
-    {
-        perror("Error while opening the file.\n");
-        exit(EXIT_FAILURE);
+    for (int i = 0; i < 9; ++i) {
+        fscanf(fp, "%f", &m[i]);
+        printf("%f\n", m[i]);
     }
 
-    printf("The contents of %s file are :\n", "homography.txt");
-
-    while( ( ch = fgetc(fp) ) != EOF ) {
-        printf("%c",ch);
-        m[i] = ch;
-        ++i; 
-    }
-    fclose(fp);
+    fclose (fp);
 }
 
 static gboolean on_message(GstBus *bus, GstMessage *message, gpointer user_data)
@@ -59,6 +49,7 @@ static gboolean on_message(GstBus *bus, GstMessage *message, gpointer user_data)
     return TRUE;
 }
 
+
 static void set_matrix(GstElement *element)
 {
     GValueArray *va;
@@ -70,22 +61,8 @@ static void set_matrix(GstElement *element)
      * cvGetPerspectiveTransform() from OpenCV to build it
      * from a quad-to-quad transformation */
 
-    //correct perspective transformation (inverse homography matrix)
-
     read_in_homography();
-    printf("First element is: %s", m[0]);
-    /*
-    m[0] = 0.5596920890906797;
-    m[1] = -0.1412048233981934;
-    m[2] = 446.51265980743085;
-    m[3] = 0.0066711834839692915;
-    m[4] = 0.6200540755978856;
-    m[5] = 114.0658474001021;
-    m[6] = -0.000002252642877335033;
-    m[7] = -0.0001325456040613653;
-    m[8] = 0.9749208559006408;*/
-
-
+    
     /*gdouble xp, yp, w, xi, yi, x, y;
 
     /* Matrix multiplication 

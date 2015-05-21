@@ -6,6 +6,7 @@
 #include <fstream>
 #include <limits>
 #include <numeric>
+#include <unistd.h>
 using namespace cv;
 using namespace std;
  
@@ -32,7 +33,7 @@ void showFinal(Mat src1,Mat src2)
     src2.copyTo(src2final,gray);
     Mat finalImage = src1final+src2final;
     namedWindow( "output", WINDOW_AUTOSIZE );
-    resize(finalImage, finalImage, cvSize(620, 480));
+    //resize(finalImage, finalImage, cvSize(854, 480));
     imshow("output",finalImage);
     cvWaitKey(0);
  
@@ -52,7 +53,7 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
         }
         else
         {
-            destroyWindow("Display window");
+            //destroyWindow("Display window");
 
             cout << " Calculating Homography " <<endl;
             // Deactivate callback
@@ -62,6 +63,14 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
             
             int cols = H.cols, rows = H.rows;
 
+            for(int i = 0; i < rows; i++)
+            {
+                const double* Mi = H.ptr<double>(i);
+                for(int j = 0; j < cols; j++) {
+                    std::cout << "m[" << element_number << "] = " << Mi[j] << ";" << std::endl;
+                }
+            }
+            
             H = H.inv();
 
             // write homography in file
@@ -72,7 +81,8 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
             {
                 const double* Mi = H.ptr<double>(i);
                 for(int j = 0; j < cols; j++) {
-                    H_out << Mi[j] << std::endl;
+                   // Mi[j] = Mi[j] / H[3][3];
+                    H_out  << Mi[j] << std::endl;
                     element_number += 1;
                 }
             }
@@ -90,6 +100,26 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
  
     }
 }
+
+void captureImage(){
+    CvCapture* capture = 0;
+    Mat frame;
+
+    capture = cvCaptureFromCAM(0);
+    if(!capture) {
+        std::cout << "Error: No device detected!" << std::endl;
+    }
+
+    if(capture) {
+        
+        IplImage* iplImg = cvQueryFrame(capture);
+        frame = iplImg;
+        std::cout << "Hallo" << std::endl;
+        imshow("test", frame);
+    }
+    
+    
+}
  
  
 int main( int argc, char** argv )
@@ -101,20 +131,20 @@ int main( int argc, char** argv )
         return -1;
     }
  
- 
+    captureImage();
 // Load images from arguments passed.
     imageMain = imread(argv[1], CV_LOAD_IMAGE_COLOR);
     //imageLogo = imread(argv[2], CV_LOAD_IMAGE_COLOR);
 // Push the 4 corners of the logo image as the 4 points for correspondence to calculate homography.
     left_image.push_back(Point2f(float(0),float(0)));
-    left_image.push_back(Point2f(float(0),float(480)));
-    left_image.push_back(Point2f(float(620),float(480)));
-    left_image.push_back(Point2f(float(620),float(0)));
+    left_image.push_back(Point2f(float(0),float(1080)));
+    left_image.push_back(Point2f(float(1920),float(1080))); //854, 480
+    left_image.push_back(Point2f(float(1920),float(0)));
  
  
  
     namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-    resize(imageMain, imageMain, cvSize(620, 480));
+    //resize(imageMain, imageMain, cvSize(854, 480));
     imshow( "Display window", imageMain );
  	
  
