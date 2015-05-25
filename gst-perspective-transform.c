@@ -90,8 +90,9 @@ static void set_matrix(GstElement *element)
 
 int main(void)
 {
-    GstElement *pipeline, *src, *capsfilter, *perspective, *conv, *sink;
+    GstElement *pipeline, *src, *capsfilter, *perspective, *conv, *encoder, *payloader, *sink;
     GstCaps *caps;
+    GstCaps *sinkcaps;
     GstBus *bus;
     GMainLoop *loop;
     int ret;
@@ -102,44 +103,56 @@ int main(void)
 
     src = gst_element_factory_make("v4l2src", NULL);
 
-    caps = gst_caps_from_string("video/x-raw");
-
     capsfilter = gst_element_factory_make("capsfilter", NULL);
-    g_object_set(G_OBJECT(capsfilter), "caps", caps, NULL);
 
     perspective = gst_element_factory_make("perspective", NULL);
     set_matrix(perspective);
 
+    payloader = gst_element_factory_make("rtpjpegpay", NULL);
+    encoder = gst_element_factory_make("jpegenc", NULL);
+
     conv = gst_element_factory_make("videoconvert", NULL);
 
-    sink = gst_element_factory_make("autovideosink", NULL);
+    sink = gst_element_factory_make("udpsink", NULL);
+    g_object_set(G_OBJECT(sink),
+            "host", "141.54.172.34",
+            "port", 5000,
+            NULL);
+
+   g_object_set (G_OBJECT (capsfilter), "caps",
+            gst_caps_new_simple ("video/x-raw", NULL), NULL);
+    
     g_return_val_if_fail(sink != NULL, -1);
 
-    gst_bin_add_many(GST_BIN(pipeline), src, capsfilter, perspective, conv, sink, NULL);
-    ret = gst_element_link_many(src, capsfilter, perspective, conv, sink, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), src, capsfilter, conv, encoder, payloader, sink, NULL);
+   
+    ret = gst_element_link_many(src, capsfilter, conv, encoder, payloader, sink, NULL);
     if (!ret) {
         g_error("Failed to link elements");
         return -2;
     }
 
+
     loop = g_main_loop_new(NULL, FALSE);
 
     bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     gst_bus_add_signal_watch(bus);
-    g_signal_connect(G_OBJECT(bus), "message", G_CALLBACK(on_message),
-             loop);
+    //g_signal_connect(G_OBJECT(bus), "message", G_CALLBACK(on_message),
+            // loop);
+    g_signal_connect (G_OBJECT(bus), "message", G_CALLBACK (on_message), NULL);
     gst_object_unref(GST_OBJECT(bus));
 
+    //play
     ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         g_error("Failed to go into PLAYING state");
         return -3;
     }
-
     g_main_loop_run(loop);
-
+    
+    // clean up
     gst_element_set_state(pipeline, GST_STATE_NULL);
-
+    
     g_main_loop_unref(loop);
     gst_object_unref(pipeline);
 
