@@ -16,6 +16,7 @@ vector<Point2f> right_image;    // stores 4 points that the user clicks(mouse le
  
 // Image containers for main and logo image
 Mat imageMain;
+Mat frame;
 
 int element_number = 0;
  
@@ -103,20 +104,32 @@ void on_mouse( int e, int x, int y, int d, void *ptr )
 
 void captureImage(){
     CvCapture* capture = 0;
-    Mat frame;
 
-    capture = cvCaptureFromCAM(0);
+    capture = cvCreateCameraCapture(0);
     if(!capture) {
         std::cout << "Error: No device detected!" << std::endl;
     }
 
-    if(capture) {
-        
-        IplImage* iplImg = cvQueryFrame(capture);
-        frame = iplImg;
-        std::cout << "Hallo" << std::endl;
-        imshow("test", frame);
+    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 1920 );
+    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 1080 );
+
+    cvNamedWindow("Live Image", CV_WINDOW_AUTOSIZE);
+    cvResizeWindow("Live Image", 1920, 1080);
+    IplImage* image;
+
+
+    while(capture) {
+        image = cvQueryFrame(capture);
+        cvShowImage("Live Image", image);
+        char c = cvWaitKey(33);
+
+        // press ESC to go from the screen to the calibration window
+        if(c == 27)
+           break;
     }
+
+    frame = image;
+    cvDestroyWindow("image");
     
     
 }
@@ -124,18 +137,21 @@ void captureImage(){
  
 int main( int argc, char** argv )
 {
-//  We need tow argumemts. "Main image" and "logo image"
-    if( argc != 2)
-    {
-        cout <<" Usage: ./opencv_calib_tool your_calibration_image.jpg" << endl;
+
+    //  We need tow argumemts. "Main image" and "logo image"
+    if (argc == 1) {    // capture image from webcam
+        captureImage();
+        imageMain = frame;
+    }
+    else if (argc == 2) {   // read in an image
+        imageMain = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    }
+    else {
+        cout <<" Usage error: to use the webcam image use: \n./opencv_calib_tool \n to use your own picture use:\n ./opencv_calib_tool your_calibration_image.jpg" << endl;
         return -1;
     }
- 
-    captureImage();
-// Load images from arguments passed.
-    imageMain = imread(argv[1], CV_LOAD_IMAGE_COLOR);
-    //imageLogo = imread(argv[2], CV_LOAD_IMAGE_COLOR);
-// Push the 4 corners of the logo image as the 4 points for correspondence to calculate homography.
+
+    // Push the 4 corners of the logo image as the 4 points for correspondence to calculate homography.
     left_image.push_back(Point2f(float(0),float(0)));
     left_image.push_back(Point2f(float(0),float(1080)));
     left_image.push_back(Point2f(float(1920),float(1080))); //854, 480
@@ -143,19 +159,21 @@ int main( int argc, char** argv )
  
  
  
-    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+    namedWindow( "Calibration window", WINDOW_AUTOSIZE );// Create a window for display.
     //resize(imageMain, imageMain, cvSize(854, 480));
-    imshow( "Display window", imageMain );
+    imshow( "Calibration window", imageMain );
  	
  
-    setMouseCallback("Display window",on_mouse, NULL );
+    setMouseCallback("Calibration window",on_mouse, NULL );
  
  
-//  Press "Escape button" to exit
+    //  Press "Escape button" to exit
     while(1)
     {
-        int key=cvWaitKey(10);
-        if(key==27) break;
+        int key = cvWaitKey(10);
+        if (key == 27) {
+            break;
+        }
     }
  
  
