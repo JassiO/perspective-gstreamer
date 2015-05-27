@@ -90,9 +90,7 @@ static void set_matrix(GstElement *element)
 
 int main(void)
 {
-    GstElement *pipeline, *src, *capsfilter, *perspective, *conv, *encoder, *payloader, *sink;
-    GstCaps *caps;
-    GstCaps *sinkcaps;
+    GstElement *pipeline, *src, *capsfilter, *decodebin, *parser, *decoder, *colorspace, *perspective, *conv, *encoder, *payloader, *sink;
     GstBus *bus;
     GMainLoop *loop;
     int ret;
@@ -108,8 +106,8 @@ int main(void)
     perspective = gst_element_factory_make("perspective", NULL);
     set_matrix(perspective);
 
-    payloader = gst_element_factory_make("rtpjpegpay", NULL);
-    encoder = gst_element_factory_make("jpegenc", NULL);
+    encoder = gst_element_factory_make("x264enc", NULL);
+    payloader = gst_element_factory_make("rtph264pay", NULL);
 
     conv = gst_element_factory_make("videoconvert", NULL);
 
@@ -117,16 +115,16 @@ int main(void)
     g_object_set(G_OBJECT(sink),
             "host", "141.54.172.34",
             "port", 5000,
-            NULL);
+            NULL); 
 
    g_object_set (G_OBJECT (capsfilter), "caps",
             gst_caps_new_simple ("video/x-raw", NULL), NULL);
     
     g_return_val_if_fail(sink != NULL, -1);
 
-    gst_bin_add_many(GST_BIN(pipeline), src, capsfilter, conv, encoder, payloader, sink, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), src, perspective, conv, encoder, payloader, sink, NULL);
    
-    ret = gst_element_link_many(src, capsfilter, conv, encoder, payloader, sink, NULL);
+    ret = gst_element_link_many(src, perspective, conv, encoder, payloader, sink, NULL);
     if (!ret) {
         g_error("Failed to link elements");
         return -2;
